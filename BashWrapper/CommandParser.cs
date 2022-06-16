@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace BashWrapper;
 
@@ -7,8 +8,15 @@ public static class CommandParser
 {
     private static readonly SortedSet<string> MainCommands = new()
     {
-        "pwd", "cat", "wc", "echo", "true", "false", "||", "&&", ";", "ls"
+        "pwd", "cat", "wc", "echo", "true", "false", "ls", "$?"
     };
+
+    private static readonly SortedSet<string> Connectors = new()
+    {
+        "||", "&&", ";"
+    };
+
+    private const string AssignLocalVariablePattern = @"^\$\w+=.+";
 
     public static ImmutableList<string> Parse(string inputCommand)
     {
@@ -44,25 +52,53 @@ public static class CommandParser
         return parsedCommand.ToImmutableList();
     }
 
-    public static ImmutableList<ImmutableList<string>> SplitArgsByMainCommands(ImmutableList<string> args)
+    public static ImmutableList<ImmutableList<string>> SplitArgsByConnectors(ImmutableList<string> args)
     {
-        var allCorrectCommands = new List<ImmutableList<string>>();
+        var allCommands = new List<ImmutableList<string>>();
         var currentCommand = new List<string>();
-
-        if (!MainCommands.Contains(args.First()))
-            throw new ArgumentException("Incorrect command!");
 
         var i = 0;
         while (i < args.Count)
         {
-            currentCommand.Add(args[i++]);
-            while (i < args.Count && !MainCommands.Contains(args[i]))
+            while (i < args.Count && !Connectors.Contains(args[i]))
                 currentCommand.Add(args[i++]);
 
-            allCorrectCommands.Add(currentCommand.ToImmutableList());
+            allCommands.Add(currentCommand.ToImmutableList());
             currentCommand.Clear();
+
+            if (i < args.Count) allCommands.Add(new List<string> {args[i++]}.ToImmutableList());
+        }
+        
+        if (allCommands.Any(command =>
+                !MainCommands.Contains(command.First()) &&
+                !Regex.IsMatch(command.First(), AssignLocalVariablePattern) &&
+                !Connectors.Contains(command.First())))
+        {
+            throw new ArgumentException("Incorrect command!");
         }
 
-        return allCorrectCommands.ToImmutableList();
+        return allCommands.ToImmutableList();
+    }
+
+    public static (string, ImmutableList<string>) ParseCommandArgs(ImmutableList<string> command)
+    {
+        var mainArg = command.First();
+        var commandArgs = command.GetRange(1, command.Count - 1);
+        return (mainArg, commandArgs);
+    }
+
+    public static ImmutableList<string> ReplaceLocalVariables(ImmutableList<string> commandArgs,
+        Dictionary<string, string> localVariablesValues)
+    {
+        var args = commandArgs.ToList();
+        for (var i = 0; i < args.Count; i++)
+        {
+            var command = args[i];
+            if (command.First() != '$' || command.Contains('=')) continue;
+            var variable = command[1..];
+            args[i] = localVariablesValues[variable];
+        }
+
+        return args.ToImmutableList();
     }
 }
