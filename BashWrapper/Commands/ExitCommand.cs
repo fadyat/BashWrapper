@@ -12,7 +12,7 @@ public class ExitCommand : AbstractCommand
     {
         if (!CanExecute())
         {
-            if (Args.Count == 1) throw new ArgumentException($"Too much args {Args.Count}, expected 1!");
+            if (Args.Count != 1) throw new ArgumentException($"Wrong args number {Args.Count}, expected 1!");
             throw new ArgumentException("Exit code must be integer!");
         }
 

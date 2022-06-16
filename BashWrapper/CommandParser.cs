@@ -22,6 +22,7 @@ public static class CommandParser
     };
 
     private const string AssignLocalVariablePattern = @"^\$\w+=.+";
+    private const string LocalVariablePattern = @"^\$\w+";
 
     public static ImmutableList<string> Parse(string inputCommand)
     {
@@ -57,7 +58,7 @@ public static class CommandParser
         return parsedCommand.ToImmutableList();
     }
 
-    public static ImmutableList<ImmutableList<string>> SplitArgsByConnectors(ImmutableList<string> args)
+    public static ImmutableList<ImmutableList<string>> SplitArgsByConnectorsAndRedirectors(ImmutableList<string> args)
     {
         var allCommands = new List<ImmutableList<string>>();
         var currentCommand = new List<string>();
@@ -65,19 +66,25 @@ public static class CommandParser
         var i = 0;
         while (i < args.Count)
         {
-            while (i < args.Count && !Connectors.Contains(args[i]))
+            while (i < args.Count && !Connectors.Contains(args[i]) && !Redirectors.Contains(args[i]))
                 currentCommand.Add(args[i++]);
 
             allCommands.Add(currentCommand.ToImmutableList());
             currentCommand.Clear();
 
-            if (i < args.Count) allCommands.Add(new List<string> {args[i++]}.ToImmutableList());
+            if (i >= args.Count) continue;
+
+            if (IsConnector(args[i]))
+                allCommands.Add(new List<string> {args[i++]}.ToImmutableList());
+            else if (IsRedirector(args[i]))
+                allCommands.Add(new List<string> {args[i++], args[i++]}.ToImmutableList());
         }
 
         if (allCommands.Any(command =>
-                !MainCommands.Contains(command.First()) &&
+                !IsMainCommand(command.First()) &&
                 !Regex.IsMatch(command.First(), AssignLocalVariablePattern) &&
-                !Connectors.Contains(command.First())))
+                !IsConnector(command.First()) &&
+                !IsRedirector(command.First())))
         {
             throw new ArgumentException("Incorrect command!");
         }
@@ -104,5 +111,25 @@ public static class CommandParser
         }
 
         return args.ToImmutableList();
+    }
+
+    public static bool IsMainCommand(string mainArg)
+    {
+        return MainCommands.Contains(mainArg);
+    }
+
+    public static bool IsConnector(string mainArg)
+    {
+        return Connectors.Contains(mainArg);
+    }
+
+    public static bool IsRedirector(string mainArg)
+    {
+        return Redirectors.Contains(mainArg);
+    }
+
+    public static bool IsVariable(string mainArg)
+    {
+        return Regex.IsMatch(mainArg, LocalVariablePattern);
     }
 }
