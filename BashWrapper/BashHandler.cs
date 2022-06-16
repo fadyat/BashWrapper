@@ -22,7 +22,7 @@ public class BashHandler
         _outputMethod = outputMethod;
         _assignedVariables = new Dictionary<string, string>
         {
-            ["$?"] = ExitStatus.True.ToString()
+            ["$?"] = ((int) ExitStatus.True).ToString()
         };
         _running = true;
         _buffer = new StringBuilder();
@@ -30,7 +30,8 @@ public class BashHandler
         _toStack = false;
     }
 
-    public void AnalyzeRequests()
+    // option for ending tests w/o -- command ; exit 0
+    public void AnalyzeRequests(bool endAfterOneCommand = false)
     {
         while (_running)
         {
@@ -42,12 +43,14 @@ public class BashHandler
                 var groupedCommands = CommandParser.SplitArgsByConnectorsAndRedirectors(parsedCommand);
                 // groupedCommands.ForEach(x =>
                 // {
-                    // x.ForEach(Console.WriteLine);
-                    // Console.WriteLine("----");
+                // x.ForEach(Console.WriteLine);
+                // Console.WriteLine("----");
                 // });
                 RunCommands(groupedCommands);
+                if (_buffer.Length > 0 && _buffer[^1] == '\n') _buffer.Remove(_buffer.Length - 1, 1);
                 _outputMethod.Output(_buffer.ToString());
                 _buffer.Clear();
+                if (endAfterOneCommand) break;
             }
             catch (Exception e)
             {
@@ -76,18 +79,18 @@ public class BashHandler
                     var (nextCommandMain, _) = CommandParser.ParseCommandArgs(nextCommand);
                     if (nextCommandMain == "<") _toStack = true;
                 }
-                
+
                 if (CommandParser.IsMainCommand(mainArg)) CommandAnalyzer(mainArg, commandArgs);
                 else if (CommandParser.IsConnector(mainArg)) runningCommand = ConnectorAnalyzer(mainArg);
                 else if (CommandParser.IsRedirector(mainArg)) RedirectorAnalyzer(mainArg, commandArgs);
                 else if (CommandParser.IsVariable(mainArg)) VariableAnalyzer(mainArg);
 
-                _assignedVariables["$?"] = ExitStatus.True.ToString();
+                if (mainArg != "false") _assignedVariables["$?"] = ((int) ExitStatus.True).ToString();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                _assignedVariables["$?"] = ExitStatus.False.ToString();
+                _assignedVariables["$?"] = ((int) ExitStatus.False).ToString();
             }
         }
     }

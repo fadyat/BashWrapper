@@ -15,7 +15,7 @@ public class FalseCommand : AbstractCommand
 
     public override object Execute()
     {
-        _assignedVariables["$?"] = ExitStatus.False.ToString();
+        _assignedVariables["$?"] = ((int) ExitStatus.False).ToString();
         return _assignedVariables;
     }
 

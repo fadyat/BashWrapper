@@ -15,7 +15,7 @@ public class TrueCommand : AbstractCommand
 
     public override object Execute()
     {
-        _assignedVariables["$?"] = ExitStatus.True.ToString();
+        _assignedVariables["$?"] = ((int) ExitStatus.True).ToString();
         return _assignedVariables;
     }
 
