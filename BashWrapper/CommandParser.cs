@@ -8,12 +8,17 @@ public static class CommandParser
 {
     private static readonly SortedSet<string> MainCommands = new()
     {
-        "pwd", "cat", "wc", "echo", "true", "false", "ls", "$?"
+        "pwd", "cat", "wc", "echo", "true", "false", "ls", "exit"
     };
 
     private static readonly SortedSet<string> Connectors = new()
     {
         "||", "&&", ";"
+    };
+
+    private static readonly SortedSet<string> Redirectors = new()
+    {
+        ">", ">>", "<"
     };
 
     private const string AssignLocalVariablePattern = @"^\$\w+=.+";
@@ -68,7 +73,7 @@ public static class CommandParser
 
             if (i < args.Count) allCommands.Add(new List<string> {args[i++]}.ToImmutableList());
         }
-        
+
         if (allCommands.Any(command =>
                 !MainCommands.Contains(command.First()) &&
                 !Regex.IsMatch(command.First(), AssignLocalVariablePattern) &&
@@ -93,10 +98,9 @@ public static class CommandParser
         var args = commandArgs.ToList();
         for (var i = 0; i < args.Count; i++)
         {
-            var command = args[i];
-            if (command.First() != '$' || command.Contains('=')) continue;
-            var variable = command[1..];
-            args[i] = localVariablesValues[variable];
+            var variable = args[i];
+            if (variable.First() != '$' || variable.Contains('=')) continue;
+            args[i] = localVariablesValues.ContainsKey(variable) ? localVariablesValues[variable] : string.Empty;
         }
 
         return args.ToImmutableList();
