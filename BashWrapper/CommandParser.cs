@@ -50,10 +50,7 @@ public static class CommandParser
             }
         }
 
-        if (token.Length > 0)
-        {
-            parsedCommand.Add(token.ToString());
-        }
+        if (token.Length > 0) parsedCommand.Add(token.ToString());
 
         return parsedCommand.ToImmutableList();
     }
@@ -69,8 +66,11 @@ public static class CommandParser
             while (i < args.Count && !Connectors.Contains(args[i]) && !Redirectors.Contains(args[i]))
                 currentCommand.Add(args[i++]);
 
-            allCommands.Add(currentCommand.ToImmutableList());
-            currentCommand.Clear();
+            if (currentCommand.Any())
+            {
+                allCommands.Add(currentCommand.ToImmutableList());
+                currentCommand.Clear();
+            }
 
             if (i >= args.Count) continue;
 
