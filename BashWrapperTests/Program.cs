@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using BashWrapper;
 using BashWrapper.Outputs;
 using NUnit.Framework;
@@ -153,13 +154,7 @@ public class Tests
         var actual = _stringWriter.ToString()[..expected.Length];
         Assert.AreEqual(expected, actual);
     }
-
-    [Test]
-    public void WcTest()
-    {
-        // ...
-    }
-
+    
     [Test]
     public void AndConnectorTestTrue()
     {
