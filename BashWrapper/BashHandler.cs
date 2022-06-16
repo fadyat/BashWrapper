@@ -119,6 +119,12 @@ public class BashHandler
         {
             UpdateExitStatus(ExitStatus.False);
         }
+        else if (mainArg == "wc")
+        {
+            var wcCommand = new WcCommand(commandArgs);
+            var result = (wcCommand.Execute() as ImmutableList<(int l, int w, int b)>)!;
+            result.ForEach(x => _buffer.AppendLine($"{x.l} |\t{x.w} |\t{x.b}"));
+        }
     }
 
     private bool ConnectorAnalyzer(string mainArg)
