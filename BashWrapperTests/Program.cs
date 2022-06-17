@@ -243,7 +243,12 @@ public class Tests
     private static string FixExpectedStringFormat(IEnumerable<string> lines)
     {
         var builder = new StringBuilder();
-        foreach (var line in lines) builder.AppendLine(line);
+        foreach (var line in lines)
+        {
+            var updatedLine = line.Any() && line.Last() == '\r' ? line[..^1] : line;
+            builder.AppendLine(updatedLine);
+        }
+
         return builder.ToString();
     }
 }
