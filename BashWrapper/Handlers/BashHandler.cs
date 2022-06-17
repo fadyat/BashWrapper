@@ -6,34 +6,34 @@ using BashWrapper.Commands.RedirectCommands;
 using BashWrapper.Outputs;
 using static System.Enum;
 
-namespace BashWrapper;
+namespace BashWrapper.Handlers;
 
 public class BashHandler
 {
-    private readonly IOutput _outputMethod;
+    protected readonly IOutput OutputMethod;
     private readonly Dictionary<string, string> _assignedVariables;
-    private bool _running;
-    private readonly StringBuilder _buffer;
+    protected bool Running;
+    protected readonly StringBuilder Buffer;
     private readonly Stack<AbstractCommand> _commandsStack;
     private bool _toStack;
 
     public BashHandler(IOutput outputMethod)
     {
-        _outputMethod = outputMethod;
+        OutputMethod = outputMethod;
         _assignedVariables = new Dictionary<string, string>
         {
             ["$?"] = ((int) ExitStatus.True).ToString()
         };
-        _running = true;
-        _buffer = new StringBuilder();
+        Running = true;
+        Buffer = new StringBuilder();
         _commandsStack = new Stack<AbstractCommand>();
         _toStack = false;
     }
 
     // option for ending tests w/o -- command ; exit 0
-    public void AnalyzeRequests(bool endAfterOneCommand = false)
+    public virtual void AnalyzeRequests()
     {
-        while (_running)
+        while (Running)
         {
             try
             {
@@ -41,18 +41,9 @@ public class BashHandler
                 if (string.IsNullOrEmpty(inputCommand)) continue;
                 var parsedCommand = CommandParser.Parse(inputCommand);
                 var groupedCommands = CommandParser.SplitArgsByConnectorsAndRedirectors(parsedCommand);
-                // groupedCommands.ForEach(x =>
-                // {
-                // x.ForEach(Console.WriteLine);
-                // Console.WriteLine("----");
-                // });
                 RunCommands(groupedCommands);
-                var outputString = _buffer.ToString();
-                if (outputString.Any())
-                    outputString = Environment.NewLine == "\n" ? outputString[..^1] : outputString[..^2];
-                _outputMethod.Output(outputString);
-                _buffer.Clear();
-                if (endAfterOneCommand) break;
+                OutputMethod.Output(Buffer.ToString());
+                Buffer.Clear();
             }
             catch (Exception e)
             {
@@ -61,14 +52,14 @@ public class BashHandler
         }
     }
 
-    private void RunCommands(ImmutableList<ImmutableList<string>> groupedCommands)
+    protected void RunCommands(ImmutableList<ImmutableList<string>> groupedCommands)
     {
         var runningCommand = true;
         for (var i = 0; i < groupedCommands.Count; i++)
         {
             try
             {
-                if (!_running || !runningCommand) break;
+                if (!Running || !runningCommand) break;
 
                 var command = groupedCommands[i];
                 var (mainArg, commandArgs) = CommandParser.ParseCommandArgs(command);
@@ -100,18 +91,18 @@ public class BashHandler
     private void CommandAnalyzer(string mainArg, ImmutableList<string> commandArgs)
     {
         AbstractCommand command;
-        if (mainArg == "pwd") command = new PwdCommand(commandArgs, _buffer);
-        else if (mainArg == "ls") command = new LsCommand(commandArgs, _buffer);
-        else if (mainArg == "cat") command = new CatCommand(commandArgs, _buffer);
-        else if (mainArg == "echo") command = new EchoCommand(commandArgs, _buffer);
-        else if (mainArg == "wc") command = new WcCommand(commandArgs, _buffer);
+        if (mainArg == "pwd") command = new PwdCommand(commandArgs, Buffer);
+        else if (mainArg == "ls") command = new LsCommand(commandArgs, Buffer);
+        else if (mainArg == "cat") command = new CatCommand(commandArgs, Buffer);
+        else if (mainArg == "echo") command = new EchoCommand(commandArgs, Buffer);
+        else if (mainArg == "wc") command = new WcCommand(commandArgs, Buffer);
         else if (mainArg == "exit")
         {
-            command = new ExitCommand(commandArgs, _buffer, _assignedVariables);
-            _running = false;
+            command = new ExitCommand(commandArgs, Buffer, _assignedVariables);
+            Running = false;
         }
-        else if (mainArg == "true") command = new TrueCommand(commandArgs, _buffer, _assignedVariables);
-        else command = new FalseCommand(commandArgs, _buffer, _assignedVariables);
+        else if (mainArg == "true") command = new TrueCommand(commandArgs, Buffer, _assignedVariables);
+        else command = new FalseCommand(commandArgs, Buffer, _assignedVariables);
 
         TryToExecute(command);
     }
@@ -141,19 +132,19 @@ public class BashHandler
     {
         if (mainArg == ">")
         {
-            var inputRedirectCommand = new InputRedirectCommand(commandArgs, _buffer, true);
+            var inputRedirectCommand = new InputRedirectCommand(commandArgs, Buffer, true);
             inputRedirectCommand.Execute();
-            _buffer.Clear();
+            Buffer.Clear();
         }
         else if (mainArg == ">>")
         {
-            var inputRedirectCommand = new InputRedirectCommand(commandArgs, _buffer);
+            var inputRedirectCommand = new InputRedirectCommand(commandArgs, Buffer);
             inputRedirectCommand.Execute();
-            _buffer.Clear();
+            Buffer.Clear();
         }
         else if (mainArg == "<")
         {
-            var outputRedirectCommand = new OutputRedirectCommand(commandArgs, _buffer, _commandsStack);
+            var outputRedirectCommand = new OutputRedirectCommand(commandArgs, Buffer, _commandsStack);
             outputRedirectCommand.Execute();
             outputRedirectCommand.ToBuffer();
         }
