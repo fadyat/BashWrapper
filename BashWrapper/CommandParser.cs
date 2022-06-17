@@ -24,7 +24,7 @@ public static class CommandParser
     private const string AssignLocalVariablePattern = @"^\$\w+=.+";
     private const string LocalVariablePattern = @"^\$\w+";
 
-    public static ImmutableList<string> Parse(string? inputCommand)
+    public static ImmutableList<string> Parse(string inputCommand)
     {
         var parsedCommand = new List<string>();
         var token = new StringBuilder();

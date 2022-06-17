@@ -11,11 +11,11 @@ namespace BashWrapperTests;
 
 public class Tests
 {
-    private BashHandler _analyzer;
-    private string _currentDirectory;
-    private string _filePath;
-    private string _fileName;
-    private StringWriter _stringWriter;
+    private BashHandler _analyzer = null!;
+    private string _currentDirectory = null!;
+    private string _filePath = null!;
+    private string _fileName = null!;
+    private StringWriter _stringWriter = null!;
 
     [SetUp]
     public void Setup()

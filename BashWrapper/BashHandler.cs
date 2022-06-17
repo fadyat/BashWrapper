@@ -47,8 +47,10 @@ public class BashHandler
                 // Console.WriteLine("----");
                 // });
                 RunCommands(groupedCommands);
-                if (_buffer.Length > 0 && _buffer[^1] == '\n') _buffer.Remove(_buffer.Length - 1, 1);
-                _outputMethod.Output(_buffer.ToString());
+                var outputString = _buffer.ToString();
+                if (outputString.Any())
+                    outputString = Environment.NewLine == "\n" ? outputString[..^1] : outputString[..^2];
+                _outputMethod.Output(outputString);
                 _buffer.Clear();
                 if (endAfterOneCommand) break;
             }
