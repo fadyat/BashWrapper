@@ -36,7 +36,7 @@ public static class FormatFixer
     private static IEnumerable<string> RemoveEmptyStrings(IEnumerable<string> splitLine)
     {
         var lst = splitLine.ToList();
-        lst.Remove(string.Empty);
+        lst.Remove("");
         return lst;
     }
 }

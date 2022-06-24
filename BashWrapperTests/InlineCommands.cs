@@ -166,7 +166,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         var actual = _stringWriter.ToString();
-        FormatFixer.AreEqual(string.Empty, actual);
+        FormatFixer.AreEqual("", actual);
     }
 
     [Test]
@@ -188,7 +188,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         var actual = _stringWriter.ToString();
-        FormatFixer.AreEqual(string.Empty, actual);
+        FormatFixer.AreEqual("", actual);
     }
 
     [Test]
