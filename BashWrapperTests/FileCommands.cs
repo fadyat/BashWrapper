@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BashWrapper.Handlers;
@@ -22,7 +21,6 @@ public class FileCommands
         _fileName = "tmp.txt";
         _filePath = Path.Combine(_currentDirectory, _fileName);
         using (File.Create(Path.Combine(_currentDirectory, _fileName))) { }
-
         _stringWriter = new StringWriter();
         Console.SetOut(_stringWriter);
     }
@@ -35,8 +33,8 @@ public class FileCommands
         analyzer.AnalyzeRequests();
         var currentEntries = Directory.GetFileSystemEntries(_currentDirectory);
         var parentEntries = Directory.GetFileSystemEntries(Path.GetFullPath(Path.Combine(_currentDirectory, "..")));
-        var expected = FormatFixer.FixExpectedStringFormat(currentEntries.Concat(parentEntries));
+        var expected = currentEntries.Concat(parentEntries).ToList();
         var actual = _stringWriter.ToString();
-        Assert.AreEqual(expected, actual);
+        FormatFixer.AreEqual(expected, actual);
     }
 }
