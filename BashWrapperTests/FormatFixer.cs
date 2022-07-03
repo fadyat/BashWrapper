@@ -24,7 +24,13 @@ public static class FormatFixer
 
     public static void AreEqual(IEnumerable<string> expected, IEnumerable<string> actual)
     {
-        Assert.AreEqual(expected, actual);
+        var updatedExpected = expected.Select(expectedValue =>
+                expectedValue.Replace(Environment.NewLine, string.Empty)
+            ).ToList();
+        var updatedActual = actual.Select(actualValue =>
+            actualValue.Replace(Environment.NewLine, string.Empty)
+        ).ToList();
+        Assert.AreEqual(updatedExpected, updatedActual);
     }
 
     private static IEnumerable<string> SplitStringByNewLine(string line)
@@ -36,7 +42,7 @@ public static class FormatFixer
     private static IEnumerable<string> RemoveEmptyStrings(IEnumerable<string> splitLine)
     {
         var lst = splitLine.ToList();
-        lst.Remove("");
+        lst.Remove(string.Empty);
         return lst;
     }
 }

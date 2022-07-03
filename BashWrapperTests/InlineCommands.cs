@@ -14,13 +14,14 @@ public class Tests
     private string _currentDirectory = null!;
     private string _filePath = null!;
     private string _fileName = null!;
-    private StringWriter _stringWriter = null!;
+    private ListOutput _listOutput = null!;
 
     [SetUp]
     public void Setup()
     {
         _currentDirectory = Directory.GetCurrentDirectory();
-        _analyzer = new BashTestHandler(new ConsoleOutput());
+        _listOutput = new ListOutput();
+        _analyzer = new BashTestHandler(_listOutput);
         _fileName = "tmp.txt";
         _filePath = Path.Combine(_currentDirectory, _fileName);
         using (File.Create(Path.Combine(_currentDirectory, _fileName)))
@@ -28,8 +29,6 @@ public class Tests
         }
 
         File.WriteAllLines(_filePath, new[] { "first line", "second line", "aboba" });
-        _stringWriter = new StringWriter();
-        Console.SetOut(_stringWriter);
     }
 
     [Test]
@@ -39,7 +38,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         const string expected = "0";
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -50,7 +49,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         var expected = Directory.GetCurrentDirectory();
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -61,7 +60,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         var expected = Directory.GetFileSystemEntries(_currentDirectory);
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -73,8 +72,8 @@ public class Tests
         var stringReader = new StringReader($"cat {_fileName}");
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
-        var expected = File.ReadAllLines(_filePath);
-        var actual = _stringWriter.ToString();
+        var expected = File.ReadAllLines(_fileName);
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -87,7 +86,7 @@ public class Tests
         var expected = new List<string>();
         foreach (var content in new List<string> { _fileName, _fileName, _fileName }.Select(File.ReadAllLines))
             expected.AddRange(content);
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -99,7 +98,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         var expected = _fileName;
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -110,7 +109,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         var expected = string.Join(" ", new List<string> { _fileName, _fileName, _fileName });
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -121,7 +120,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         const string expected = "0";
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -132,7 +131,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         const string expected = "0";
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -143,7 +142,7 @@ public class Tests
         var stringReader = new StringReader($"$tmp={expected} ; echo $tmp");
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
@@ -154,19 +153,20 @@ public class Tests
         var stringReader = new StringReader($"true && echo {expected}");
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
     [Test]
     public void AndConnectorTestFalse()
     {
-        const string expected = "aboba";
-        var stringReader = new StringReader($"false && echo {expected}");
+        const string value = "aboba";
+        var stringReader = new StringReader($"false && echo {value}");
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
-        var actual = _stringWriter.ToString();
-        FormatFixer.AreEqual("", actual);
+        var expected = string.Empty;
+        var actual = _listOutput.OutputBuffer;
+        FormatFixer.AreEqual(expected, actual);
     }
 
     [Test]
@@ -176,19 +176,20 @@ public class Tests
         var stringReader = new StringReader($"false || echo {expected}");
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
     [Test]
     public void OrConnectorTestFalse()
     {
-        const string expected = "aboba";
-        var stringReader = new StringReader($"true || echo {expected}");
+        const string value = "aboba";
+        var stringReader = new StringReader($"true || echo {value}");
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
-        var actual = _stringWriter.ToString();
-        FormatFixer.AreEqual("", actual);
+        var expected = string.Empty;
+        var actual = _listOutput.OutputBuffer;
+        FormatFixer.AreEqual(expected, actual);
     }
 
     [Test]
@@ -220,7 +221,7 @@ public class Tests
         Console.SetIn(stringReader);
         _analyzer.AnalyzeRequests();
         var expected = File.ReadAllLines(_filePath);
-        var actual = _stringWriter.ToString();
+        var actual = _listOutput.OutputBuffer;
         FormatFixer.AreEqual(expected, actual);
     }
 
